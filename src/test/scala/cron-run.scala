@@ -2,9 +2,10 @@ package cronish
 package dsl
 
 import scalendar._
-import Logging._
 
 object Main {
+  implicit val cronishScheduler = new CronishScheduler(4)
+
   // Visual tests
   def main(args: Array[String]) {
     val tests = List(
@@ -50,6 +51,6 @@ object Main {
 
     Thread.sleep(3000)
 
-    Scheduled.shutdown()
+    cronishScheduler.shutdown()
   }
 }

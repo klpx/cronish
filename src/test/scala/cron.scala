@@ -3,82 +3,84 @@ package dsl
 package test
 
 import scalendar._
+import org.scalatest.{FlatSpec, Matchers}
 
 import org.scalatest.FlatSpec
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.matchers.ShouldMatchers
 
-class CronTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
+class CronTest extends FlatSpec with Matchers with BeforeAndAfterAll {
+
+  implicit val cronishScheduler = new CronishScheduler(threads = 10)
 
   override def afterAll() = {
-    Scheduled.shutdown()
+    cronishScheduler.shutdown()
   }
 
   "Cron dialect" should "be parsable" in {
-    "every day at midnight".crons should be === "0 0 * * *" 
-    "every 15 minutes at noon".crons should be === "*/15 12 * * *"
-    "every 2nd day in April at 3:30".crons should be === "30 3 2 4 *"
-    "every day on Monday at 3:30".crons should be === "30 3 * * 1"
-    "every day on the weekday at 3:30".crons should be === "30 3 * * 1-5"
-    "every 3 days in July on the weekend at 6:57".crons should be === "57 6 */3 7 0,6"
+    "every day at midnight".crons shouldBe "0 0 * * *"
+    "every 15 minutes at noon".crons shouldBe "*/15 12 * * *"
+    "every 2nd day in April at 3:30".crons shouldBe "30 3 2 4 *"
+    "every day on Monday at 3:30".crons shouldBe "30 3 * * 1"
+    "every day on the weekday at 3:30".crons shouldBe "30 3 * * 1-5"
+    "every 3 days in July on the weekend at 6:57".crons shouldBe "57 6 */3 7 0,6"
   }
 
   "Cron connectors" should "be interchangable" in {
-    "Every other month on the weekday at midnight".crons should be === "0 0 * */2 1-5"
-    "Every other month at midnight on the weekday".crons should be === "0 0 * */2 1-5"
+    "Every other month on the weekday at midnight".crons shouldBe "0 0 * */2 1-5"
+    "Every other month at midnight on the weekday".crons shouldBe "0 0 * */2 1-5"
   }
 
   "Cron syntax" should "support the 'last' keyword" in {
-    "Every month on the last Saturday".crons should be === "* * * * 6L"
-    "Every last day".crons should be === "* * L * *"
-    evaluating { "Every last month".cron } should produce [Exception]
+    "Every month on the last Saturday".crons shouldBe "* * * * 6L"
+    "Every last day".crons shouldBe "* * L * *"
+    an [Exception] should be thrownBy "Every last month".cron
   }
 
   it should "support repitition" in {
-    "every day in April, June, and August at midnight".crons should be === "0 0 * 4,6,8 *"
-    "every month at midnight and noon on Sunday".crons should be === "0 0,12 * * 0"
-    "every 3 hours on Monday, Wednesday, and Friday".crons should be === "* */3 * * 1,3,5"
-    "every month on the 1st, 3rd, 4th, and 8th days".crons should be === "* * 1,3,4,8 * *"
-    "every day at 1am, 4am, 12pm, and 1pm".crons should be === "0 1,4,12,13 * * *"
+    "every day in April, June, and August at midnight".crons shouldBe "0 0 * 4,6,8 *"
+    "every month at midnight and noon on Sunday".crons shouldBe "0 0,12 * * 0"
+    "every 3 hours on Monday, Wednesday, and Friday".crons shouldBe "* */3 * * 1,3,5"
+    "every month on the 1st, 3rd, 4th, and 8th days".crons shouldBe "* * 1,3,4,8 * *"
+    "every day at 1am, 4am, 12pm, and 1pm".crons shouldBe "0 1,4,12,13 * * *"
   }
 
   it should "support lists (-)" in {
-    "every day in January through October".crons should be === "* * * 1-10 *"
-    "every day in January to October".crons should be === "* * * 1-10 *"
-    "every day in January-October".crons should be === "* * * 1-10 *"
-    "every month on Wednesday through Saturday".crons should be === "* * * * 3-6"
-    "every month on Wednesday to Saturday".crons should be === "* * * * 3-6"
-    "every month on Wednesday-Saturday".crons should be === "* * * * 3-6"
-    "every other day at midnight to noon".crons should be === "0 0-12 */2 * *"
-    "every 3 minutes at 1am-8pm".crons should be === "*/3 1-20 * * *"
-    "every 3 minutes at 1am-8pm in the year 2013".cron.year should be === "2013"
+    "every day in January through October".crons shouldBe "* * * 1-10 *"
+    "every day in January to October".crons shouldBe "* * * 1-10 *"
+    "every day in January-October".crons shouldBe "* * * 1-10 *"
+    "every month on Wednesday through Saturday".crons shouldBe "* * * * 3-6"
+    "every month on Wednesday to Saturday".crons shouldBe "* * * * 3-6"
+    "every month on Wednesday-Saturday".crons shouldBe "* * * * 3-6"
+    "every other day at midnight to noon".crons shouldBe "0 0-12 */2 * *"
+    "every 3 minutes at 1am-8pm".crons shouldBe "*/3 1-20 * * *"
+    "every 3 minutes at 1am-8pm in the year 2013".cron.year shouldBe "2013"
   }
 
   it should "support incrementals inside connectors" in {
-    "every day in every month at midnight".crons should be === "0 0 * * *"
-    "every last day in every month at every 4 hours".crons should be === "* */4 L * *"
-    "every month on the last day at every 4 hours".crons should be === "* */4 L * *"
-    "every Friday on the last day in every month at midnight".crons should be === "0 0 L * 5"
+    "every day in every month at midnight".crons shouldBe "0 0 * * *"
+    "every last day in every month at every 4 hours".crons shouldBe "* */4 L * *"
+    "every month on the last day at every 4 hours".crons shouldBe "* */4 L * *"
+    "every Friday on the last day in every month at midnight".crons shouldBe "0 0 L * 5"
   }
 
   it should "support the special day of week syntax" in {
-    "every month on the last Friday at midnight".crons should be === "0 0 * * 5L"
-    "every month on the 2nd Friday at midnight".crons should be === "0 0 * * 5#2"
-    "every last Friday at midnight".crons should be === "0 0 * * 5L"
-    "every other Friday at midnight".crons should be === "0 0 * * 5/2"
+    "every month on the last Friday at midnight".crons shouldBe "0 0 * * 5L"
+    "every month on the 2nd Friday at midnight".crons shouldBe "0 0 * * 5#2"
+    "every last Friday at midnight".crons shouldBe "0 0 * * 5L"
+    "every other Friday at midnight".crons shouldBe "0 0 * * 5/2"
   }
 
   it should "support the special time keywords" in {
-    "every midnight".crons should be === "every day at midnight".crons
-    "every midnight on the last Friday".crons should be === "0 0 * * 5L"
+    "every midnight".crons shouldBe "every day at midnight".crons
+    "every midnight on the last Friday".crons shouldBe "0 0 * * 5L"
   }
 
   "Predefined crons" should "be correct" in {
-    hourly.toString should be === "0 * * * *"
-    daily.toString should be === "0 0 * * *"
-    weekly.toString should be === "0 0 * * 0"
-    monthly.toString should be === "0 0 1 * *"
-    yearly.toString should be === "0 0 1 1 *"
+    hourly.toString shouldBe "0 * * * *"
+    daily.toString shouldBe "0 0 * * *"
+    weekly.toString shouldBe "0 0 * * 0"
+    monthly.toString shouldBe "0 0 1 * *"
+    yearly.toString shouldBe "0 0 1 1 *"
   }
 
   "A cron task" should "be able to be built fluently" in {
@@ -86,11 +88,11 @@ class CronTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
       println("Building something leet")
     }
 
-    test.isInstanceOf[CronTask] should be === true
+    test.isInstanceOf[CronTask] shouldBe true
 
     val testjob = test executes "every second"
 
-    testjob.isInstanceOf[Scheduled] should be === true
+    testjob.isInstanceOf[Scheduled] shouldBe true
     testjob.stop()
   }
 
@@ -105,16 +107,16 @@ class CronTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
     val exampleJob = example executes "every second"
 
     // We'll sleep for a second
-    Thread.sleep(1 * 1000)
+    Thread.sleep(2 * 1100)
 
-    runs should be === 1
+    runs shouldBe 2
     exampleJob.stop()
   }
 
   it should "be able to be stopped at any time" in {
     var counter = 0
     task { counter += 1 } executes "every second" stop()
-    counter should be === 0
+    counter shouldBe 0
   }
 
   it should "be able to have a user defined description" in {
@@ -125,8 +127,8 @@ class CronTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
       println("Blah blah")
     } describedAs expected executes daily
 
-    nodesc.task.description should be === None
-    other.task.description should be === Some(expected)
+    nodesc.task.description shouldBe None
+    other.task.description shouldBe Some(expected)
 
     nodesc.stop()
     other.stop()
@@ -137,16 +139,16 @@ class CronTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
     val countTask = job { counter += 1 } describedAs "Delayed Starts"
     val delayed = countTask runs "every second" in 100.milliseconds
 
-    counter should be === 0
+    counter shouldBe 0
     Thread.sleep(1100)
     delayed.stop()
-    counter should be === 1
+    counter shouldBe 1
 
     import Scalendar.now
     val other = countTask executes "every second" starting now
     Thread.sleep(1000)
     other.stop()
-    counter should be === 2
+    counter shouldBe 2
   }
 
   it should "be able to be reset and delayed fluently" in {
@@ -165,10 +167,10 @@ class CronTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
     job(println("Tell like it is")) describedAs "on" runs monthly
     job(println("Tell like it is")) describedAs "dude" runs yearly
 
-    val active = Scheduled.active
+    val active = cronishScheduler.active
 
     val expected = "Tell him later on dude"
-    active.map(_.task.description.get).mkString(" ") should be === expected
+    active.map(_.task.description.get).mkString(" ") shouldBe expected
 
     active.foreach(_.stop())
   }
@@ -176,7 +178,7 @@ class CronTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
   "A Scheduled job" should "be able to handle errors optionally" in {
     val exampleJob = job (throw new RuntimeException("Catch this"))
 
-    exampleJob catches (_.getMessage should be === "Catch this")
+    exampleJob catches (_.getMessage shouldBe "Catch this")
 
     val running = exampleJob runs "every second"
 
@@ -192,7 +194,7 @@ class CronTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
 
     exampleJob runs "every second" stop()
 
-    counter should be === 0
+    counter shouldBe 0
   }
 
   it should "be able to run an exact number of times or forever" in {
@@ -214,22 +216,22 @@ class CronTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
         if (now > last) last + 1.day + 1.month - 1.day
         else last
       },
-      "Every month on Wednesday at midnight" -> { now =>
-        now.day.inWeek match {
-          case n if n >= 4 => 
-            (Scalendar.beginWeek(now) + (1 week)).inWeek(Day.Wednesday) 
-          case _ => Scalendar.beginDay(now).inWeek(Day.Wednesday)
-        } 
-      },
+//      "Every month on Wednesday at midnight" -> { now =>
+//        now.day.inWeek match {
+//          case n if n >= 4 =>
+//            (Scalendar.beginWeek(now) + (1 week)).inWeek(Day.Wednesday)
+//          case _ => Scalendar.beginDay(now).inWeek(Day.Wednesday)
+//        }
+//      },
       "Every month on Sunday at midnight" -> { now =>
         Scalendar.beginWeek(now) + (1 week)
       },
-      "Every month at 3:30 on the weekday" -> { now =>
-        val working = if(now.inWeek == 6 || now.inWeek == 7) 
-                        Scalendar.beginWeek(now) + (1 week) + (1 day)
-                      else Scalendar.beginDay(now) + (1 day)
-        working.hour(3).minute(30) 
-      },
+//      "Every month at 3:30 on the weekday" -> { now =>
+//        val working = if(now.inWeek == 6 || now.inWeek == 7)
+//                        Scalendar.beginWeek(now) + (1 week) + (1 day)
+//                      else Scalendar.beginDay(now) + (1 day)
+//        working.hour(3).minute(30)
+//      },
       "Every midnight on the last Friday in every month" -> { now =>
         def lastFriday(month: Int) = {
           val current = now.day(1).month(month) 
@@ -251,7 +253,9 @@ class CronTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
 
       val result = Scalendar(n.time + millis)
 
-      result should be === expected(n)
+      withClue(crons) {
+        result shouldBe expected(n)
+      }
     }
   }
 
@@ -264,7 +268,12 @@ class CronTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
                      Cron("*", "*", "*", "*", "*", s"1,${now.day.inWeek -1},6", "*"))
 
     crons.foreach(cron => {
-      Scalendar.beginDay(cron.nextTime) should be === Scalendar.beginDay(now)
+      Scalendar.beginDay(cron.nextTime) shouldBe Scalendar.beginDay(now)
     })
+  }
+
+  it should "no garbage" in {
+    cronishScheduler.shutdown()
+    Thread.sleep(60000)
   }
 }

@@ -1,12 +1,12 @@
-package cronish
-package dsl
-
-import scala.util.parsing.combinator._
+package cronish.dsl
 
 import scalendar._
 
+import scala.collection.immutable.IndexedSeq
+import scala.util.parsing.combinator._
+
 trait CronParsers extends RegexParsers {
-  def monthnames = (1 to 12).map(Month(_).toString)
+  def monthnames: IndexedSeq[String] = (1 to 12).map(Month(_).toString)
 
   def daynames = (1 to 7).map(Day(_).toString)
 

@@ -1,7 +1,8 @@
-package cronish
+package cronish.dsl
+
+import java.util.Calendar._
 
 import scalendar._
-import java.util.Calendar._
 
 /**
  * Represents a cron schedule definition. See [[http://en.wikipedia.org/wiki/Cron]] for a definition of the parameters.
@@ -307,10 +308,6 @@ case class Cron (second: String,
       field.resetWith(in).evaluate(in)
     }
 
-    lazy val rolled = fields.foldLeft(attempt) { (in, field) =>
-      field.evaluateHead(in)
-    }
-
     // Not good enough for a first attempt
     // If the first attempt works, then we use it
     val next = if (attempt <= now) {
@@ -335,7 +332,12 @@ case class Cron (second: String,
           field.evaluateHead(in)
         }
       }
-    } else if (rolled > now) rolled else attempt
+    } else {
+      val rolled = fields.foldLeft(attempt) { (in, field) =>
+        field.evaluateHead(in)
+      }
+      if (rolled > now) rolled else attempt
+    }
 
     (now to next).delta.milliseconds
   }
